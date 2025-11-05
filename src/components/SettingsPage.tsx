@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Key, Save } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Key, Save, CheckCircle, AlertCircle } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
   const [wooCommerceKey, setWooCommerceKey] = useState('');
   const [wooCommerceSecret, setWooCommerceSecret] = useState('');
   const [chatwootToken, setChatwootToken] = useState('');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     // Load saved settings from localStorage
@@ -17,14 +19,40 @@ const SettingsPage: React.FC = () => {
     setChatwootToken(savedChatwootToken);
   }, []);
 
-  const handleSave = () => {
-    // Save settings to localStorage
-    localStorage.setItem('wooCommerceKey', wooCommerceKey);
-    localStorage.setItem('wooCommerceSecret', wooCommerceSecret);
-    localStorage.setItem('chatwootToken', chatwootToken);
+  const handleSave = useCallback(() => {
+    // Validate inputs
+    if (!wooCommerceKey.trim()) {
+      setErrorMessage('WooCommerce API Key is required');
+      setSaveStatus('error');
+      return;
+    }
+    if (!wooCommerceSecret.trim()) {
+      setErrorMessage('WooCommerce API Secret is required');
+      setSaveStatus('error');
+      return;
+    }
+    if (!chatwootToken.trim()) {
+      setErrorMessage('Chatwoot API Token is required');
+      setSaveStatus('error');
+      return;
+    }
 
-    alert('Settings saved successfully!');
-  };
+    try {
+      // Save settings to localStorage
+      localStorage.setItem('wooCommerceKey', wooCommerceKey.trim());
+      localStorage.setItem('wooCommerceSecret', wooCommerceSecret.trim());
+      localStorage.setItem('chatwootToken', chatwootToken.trim());
+
+      setSaveStatus('success');
+      setErrorMessage('');
+
+      // Reset success message after 3 seconds
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    } catch {
+      setErrorMessage('Failed to save settings. Please try again.');
+      setSaveStatus('error');
+    }
+  }, [wooCommerceKey, wooCommerceSecret, chatwootToken]);
 
   return (
     <div className="bg-white shadow rounded-lg p-6">
@@ -62,19 +90,36 @@ const SettingsPage: React.FC = () => {
             Chatwoot API Token
           </label>
           <input
-            type="text"
+            type="password"
             id="chatwootToken"
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             value={chatwootToken}
             onChange={(e) => setChatwootToken(e.target.value)}
+            placeholder="Enter your Chatwoot API token"
           />
         </div>
+
+        {/* Status Messages */}
+        {saveStatus === 'success' && (
+          <div className="flex items-center p-4 bg-green-50 border border-green-200 rounded-md" role="alert">
+            <CheckCircle className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+            <span className="text-green-800">Settings saved successfully!</span>
+          </div>
+        )}
+        {saveStatus === 'error' && (
+          <div className="flex items-center p-4 bg-red-50 border border-red-200 rounded-md" role="alert">
+            <AlertCircle className="h-5 w-5 text-red-500 mr-2" aria-hidden="true" />
+            <span className="text-red-800">{errorMessage}</span>
+          </div>
+        )}
+
         <div>
           <button
             onClick={handleSave}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            aria-label="Save API settings"
           >
-            <Save className="h-5 w-5 mr-2" />
+            <Save className="h-5 w-5 mr-2" aria-hidden="true" />
             Save Settings
           </button>
         </div>

@@ -1,7 +1,9 @@
 // This is a mock API file. In a real-world scenario, you would implement
 // actual API calls to Chatwoot and WooCommerce here.
 
-const getApiKeys = () => {
+import type { UserInfo, ApiKeys } from './types';
+
+const getApiKeys = (): ApiKeys => {
   return {
     wooCommerceKey: localStorage.getItem('wooCommerceKey') || '',
     wooCommerceSecret: localStorage.getItem('wooCommerceSecret') || '',
@@ -9,11 +11,13 @@ const getApiKeys = () => {
   };
 };
 
-export const fetchUserInfo = async () => {
+export const fetchUserInfo = async (): Promise<UserInfo> => {
   const { chatwootToken, wooCommerceKey, wooCommerceSecret } = getApiKeys();
   // In a real implementation, use these tokens to make API calls to Chatwoot and WooCommerce
-  console.log('Using Chatwoot token:', chatwootToken);
-  console.log('Using WooCommerce keys:', wooCommerceKey, wooCommerceSecret);
+  // Security: Verify API keys are configured
+  if (!chatwootToken || !wooCommerceKey || !wooCommerceSecret) {
+    throw new Error('API keys not configured. Please configure them in Settings.');
+  }
 
   // Simulating an API call with a delay
   return new Promise((resolve) => {
